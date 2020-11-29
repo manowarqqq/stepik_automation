@@ -1,6 +1,13 @@
 #! usr/bin/python3
 
 from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoAlertPresentException
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from .locators import BasePageLocators
+import math
+import time
 
 class BasePage():
 
@@ -12,6 +19,10 @@ class BasePage():
     
     def open(self):
         self.browser.get(self.url)
+        
+    def go_to_login_page(self):
+        link = self.browser.find_element(*BasePageLocators.LOGIN_LINK)
+        link.click()        
 
 
     def is_element_present(self, how, what):
@@ -20,3 +31,32 @@ class BasePage():
         except (NoSuchElementException):
             return False
         return True
+        
+    def solve_quiz_and_get_code(self):
+        alert = self.browser.switch_to.alert
+        x = alert.text.split(" ")[2]
+        answer = str(math.log(abs((12 * math.sin(float(x))))))
+        alert.send_keys(answer)
+        alert.accept()
+        try:
+            alert = self.browser.switch_to.alert
+            alert_text = alert.text
+            print(f"Your code: {alert_text}")
+            alert.accept()
+        except NoAlertPresentException:
+            print("No second alert presented")
+            
+    def is_not_element_present(self, how, what, timeout=4):
+        try:
+            WebDriverWait(self.browser, timeout).until(EC.presence_of_element_located((how, what)))
+        except TimeoutException:
+            return True
+        return False                
+        	   
+    def go_to_basket(self):
+        try:
+            basket_link = self.browser.find_element(*BasePageLocators.BASKET_LINK)
+        except (NoSuchElementException):
+            return False		
+        basket_link.click()
+        return True        	   
